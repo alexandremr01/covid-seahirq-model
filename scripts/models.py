@@ -31,7 +31,7 @@ class SeahirModel:
         output_file = 'result_data_' + self.uf + '.csv'
         scen_gen(input_folder=self.cenario_folder, phases=phases, model=3, I_0=I0, R0=R0, fatality=1.0, testing_parameters_mode=testing_parameters, 
                     input_xi=xI, input_xa=xA, verbose=verbose, attack=attack)
-        os.chdir("../..")
+        os.chdir("..")
 
         if verbose:
             stdout=None
@@ -42,4 +42,4 @@ class SeahirModel:
         input_file = 'input/cenarios/' + self.cenario_folder + '/generated-input.txt'
         output_file = '/'.join(['output', output_file])
         subprocess.call(['bin/spatial_covid0d_estrat', input_file, output_file, '3'], stdout=stdout)
-        os.chdir("scripts/testing")
+        os.chdir("scripts")

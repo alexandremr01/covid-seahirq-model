@@ -10,7 +10,7 @@ age_strata = 16
 interventions = [[0]]
 
 for scenario, itv in list(itertools.product(scenarios, interventions)):
-    y = np.loadtxt("../../output/results/bifurcation_analysis/cenario" + scenario + "/itv=" + str(itv) + ".csv", delimiter=',')
+    y = np.loadtxt("../output/results/bifurcation_analysis/cenario" + scenario + "/itv=" + str(itv) + ".csv", delimiter=',')
     Iinf = y[:, 2]
     Iacc = y[:, 3]
     death = y[:, 4]
@@ -20,6 +20,6 @@ for scenario, itv in list(itertools.product(scenarios, interventions)):
     plt.xlabel('R0')
     plt.ylabel('Force')
     plt.title('Gráfico de Bifurcação')
-    plt.savefig("../../output/results/bifurcation_analysis/cenario" + scenario + "/itv=" + str(itv) + ".png")
+    plt.savefig("../output/results/bifurcation_analysis/cenario" + scenario + "/itv=" + str(itv) + ".png")
     plt.show()
     plt.close()

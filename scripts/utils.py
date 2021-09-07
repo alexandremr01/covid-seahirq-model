@@ -46,7 +46,7 @@ def get_day_to_start_testing(uf, i0, parameters):
     return np.argmax(outData.I > i0) + 2
 
 def write_testing_parameters(uf, xI, xA):
-    testing_parametres_file = os.path.join('..', '..', 'input', 'cenarios', 'cenario'+uf, 'testing_parameters.csv')
+    testing_parametres_file = os.path.join('..', 'input', 'cenarios', 'cenario'+uf, 'testing_parameters.csv')
     with open(testing_parametres_file, 'w') as csv_file:
         spamwriter = csv.writer(csv_file)
 
@@ -65,7 +65,7 @@ class OptimizedParameters:
     def __init__(self, uf, num_intervention_phases=3, tuned=True):
         self.uf = uf
         if tuned:
-            cenario = '../../input/cenarios/cenario' + uf + '/optimized_parameters_tuned.csv'
+            cenario = '../input/cenarios/cenario' + uf + '/optimized_parameters_tuned.csv'
             parameters = []
             with open(cenario, "r") as csvfile:
                 spamreader = csv.reader(csvfile, delimiter=',')
@@ -85,7 +85,7 @@ class OptimizedParameters:
         # print(parameters)
 
     def read_gamma_h(self):
-        param_file = '../../input/cenarios/cenario' + self.uf + '/parameters.csv'
+        param_file = '../input/cenarios/cenario' + self.uf + '/parameters.csv'
         with open(param_file, "r") as csvfile:
             spamreader = csv.reader(csvfile, delimiter=',')
             for row in spamreader:
@@ -123,7 +123,7 @@ class OutputData:
 
         self.t_array = np.linspace(0, t_days - 1, t_days)
 
-        output_file = '../../output/result_data_' + uf + '.csv'
+        output_file = '../output/result_data_' + uf + '.csv'
 
         with open(output_file, "r") as csvfile:
             spamreader = csv.reader(csvfile, delimiter=',')

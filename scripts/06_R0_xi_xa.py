@@ -43,5 +43,5 @@ for scenario, itv in list(itertools.product(scenarios, interventions)):
             R0 = R0FromxIxA(scenario, xI_array, xA_array, changeDir=True, attack=1.0, verbose = False, nextGenScenario=nextGenScenario)
             y.append([xi, xa, R0])
 
-    np.savetxt("../../output/results/06_R0_xi_xa/cenario" + scenario + "/itv=" + str(itv) + ".csv", y,
+    np.savetxt("../output/results/06_R0_xi_xa/cenario" + scenario + "/itv=" + str(itv) + ".csv", y,
                    delimiter=",", header="xI, xA, R0")

@@ -38,5 +38,5 @@ for xI in xi_set:
             print(deaths)
             y.append([d, deaths])
 
-        np.savetxt("../../output/results/1_test_start/cenario" + scenario + "/data_xI=" + str(xI) + "_xA="+ str(xA) + ".csv", y,
+        np.savetxt("../output/results/1_test_start/cenario" + scenario + "/data_xI=" + str(xI) + "_xA="+ str(xA) + ".csv", y,
                 delimiter=",", header="day, deaths")

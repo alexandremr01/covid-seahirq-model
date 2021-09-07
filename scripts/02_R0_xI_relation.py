@@ -39,5 +39,5 @@ for scenario, itv in list(itertools.product(scenarios, interventions)):
         R0 = R0FromxIxA(scenario, xI_array, xA_array, verbose = False)
         y.append([xi, R0])
 
-    np.savetxt("../../output/results/2_R0_xI_relation/cenario" + scenario + "/itv=" + str(itv) + ".csv", y,
+    np.savetxt("../output/results/2_R0_xI_relation/cenario" + scenario + "/itv=" + str(itv) + ".csv", y,
                    delimiter=",", header="x, r_0")

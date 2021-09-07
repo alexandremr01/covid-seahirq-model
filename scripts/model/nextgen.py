@@ -19,7 +19,7 @@ age_strata = 16
 
 def R0FromBetaGama(scenario, changeDir = True, verbose = False):
     if changeDir:
-        input_folder = '../../input/cenarios/cenario' + scenario + '/'
+        input_folder = '../input/cenarios/cenario' + scenario + '/'
     else:
         input_folder = ''
     df = pd.read_csv(input_folder + 'beta_gama.csv', sep=',')
@@ -35,7 +35,7 @@ def R0FromxIxA(scenario, xI, xA, attack=1.0, changeDir = True, verbose = False, 
 class NextGenScenario:
     def __init__(self, scenario, changeDir):
         if changeDir:
-            input_folder = '../../input/cenarios/cenario' + scenario + '/'
+            input_folder = '../input/cenarios/cenario' + scenario + '/'
         else:
             input_folder = ''
         # Read parameters

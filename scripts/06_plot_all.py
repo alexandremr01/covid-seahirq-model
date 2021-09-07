@@ -22,7 +22,7 @@ for i, scenario in enumerate(scenarios):
         efficient_points_x = []
         efficient_points_y=[]
 
-        y = np.loadtxt("../../output/results/06_R0_xi_xa/cenario" + scenario + "/itv=" + str(itv) + ".csv", delimiter=',')
+        y = np.loadtxt("../output/results/06_R0_xi_xa/cenario" + scenario + "/itv=" + str(itv) + ".csv", delimiter=',')
         R_raw = y[:, 2]
         xI = y[:, 0]
         xA = y[:, 1]
@@ -73,4 +73,4 @@ im=cm.ScalarMappable(cmap=cmap, norm=offset)
 cb=  fig.colorbar(im, ax=axs.ravel().tolist())
 
 cb.set_label("R0", fontsize=15)
-plt.savefig("../../output/results/06_R0_xi_xa/result.png", dpi=300)
+plt.savefig("../output/results/06_R0_xi_xa/result.png", dpi=300)

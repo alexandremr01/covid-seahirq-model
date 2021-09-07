@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # Correlaciona dia de inicio dos testes, com xI fixo, e número de mortos
 
 def save_tables(tables, uf, qnt):
-    filepath = os.path.join('..', '..', 'output', 'testing', 'xI_I0_table_'+uf+'.csv')
+    filepath = os.path.join('..', 'output', 'testing', 'xI_I0_table_'+uf+'.csv')
     with open(filepath, 'w') as csv_file:
         spamwriter = csv.writer(csv_file)
         spamwriter.writerow(np.concatenate((['I1'], ['maxH'], ['mortos'], ['duracao'])))
@@ -51,7 +51,7 @@ for xI in xi_set:
         duration = np.max(np.argwhere(outData.I > 1))
         y.append(deaths)
 
-    np.savetxt("../../output/testing/per_day/data_xI="+str(xI)+".csv", y, delimiter=",")
+    np.savetxt("../output/testing/per_day/data_xI="+str(xI)+".csv", y, delimiter=",")
 
     # y_np = np.array(y)
     # y_np = (y_np-np.min(y_np))/(np.max(y_np)-np.min(y_np))
@@ -59,7 +59,7 @@ for xI in xi_set:
     # plt.scatter(x, I)
     # plt.xlabel('Dia de inicio dos testes')
     # plt.title('Número de mortos ao final da epidemia com número de infectados normalizados\nPor dia de início das testagens com xI='+str(xI))
-    # plt.savefig('../../output/testing/per_day/Mortos por dia de inicio da testagem e infectados normalizados xI='+str(xI)+'.png')
+    # plt.savefig('../output/testing/per_day/Mortos por dia de inicio da testagem e infectados normalizados xI='+str(xI)+'.png')
     # #plt.show()
     # plt.close()
     #
@@ -67,6 +67,6 @@ for xI in xi_set:
     # plt.xlabel('Dia de inicio dos testes')
     # plt.ylabel('Número de mortos ao final da epidemia')
     # plt.title('Número de mortos ao final da epidemia\nxI='+str(xI))
-    # plt.savefig('../../output/testing/per_day/Mortos por dia de inicio da testagem xI='+str(xI)+'.png')
+    # plt.savefig('../output/testing/per_day/Mortos por dia de inicio da testagem xI='+str(xI)+'.png')
     #plt.show()
     # plt.show()

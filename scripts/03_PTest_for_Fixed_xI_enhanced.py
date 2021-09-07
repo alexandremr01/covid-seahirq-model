@@ -91,9 +91,9 @@ for k, itv in enumerate(interventions):
     axs[k].tick_params(axis='y', labelsize=14)
 
 plt.tight_layout()
-plt.savefig("../../output/results/3_PTest_per_xI/cenario" + scenario + "/result.png")
+plt.savefig("../output/results/3_PTest_per_xI/cenario" + scenario + "/result.png")
 plt.close()
 
-    # np.savetxt("../../output/results/3_PTest_per_xI/cenario" + scenario + "/itv=" + str(itv) + ".csv", y,
+    # np.savetxt("../output/results/3_PTest_per_xI/cenario" + scenario + "/itv=" + str(itv) + ".csv", y,
     #                delimiter=",", header="x, r_0")
 

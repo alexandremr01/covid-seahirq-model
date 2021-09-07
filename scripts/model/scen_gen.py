@@ -18,7 +18,7 @@ def scen_gen(input_folder, model, I_0, R0, phases, fatality=1.0, verbose=False, 
     
     age_strata = 16
     prev_dir = os.path.abspath(os.curdir)
-    os.chdir(os.path.join('..', '..', 'input', 'cenarios', input_folder))
+    os.chdir(os.path.join('..', 'input', 'cenarios', input_folder))
 
     prob_t = phases.g
     num_phases = phases.get_length()
@@ -63,7 +63,7 @@ def scen_gen(input_folder, model, I_0, R0, phases, fatality=1.0, verbose=False, 
     
     write_initial(pop, actual_R0, I_0, rel_pop)
     write_beta_gama(num_phases, age_strata, days, parameters, contact_matrices)
-    os.chdir(os.path.join('..', '..', '..', 'scripts', 'testing'))
+    os.chdir(os.path.join('..', '..', '..', 'scripts'))
     return actual_R0
 
 def write_initial(pop, R0, I_0, rel_pop):

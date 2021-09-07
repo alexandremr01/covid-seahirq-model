@@ -30,7 +30,7 @@ no_test_deaths = outData.CD[-1]
 for i, xA in enumerate(xi_set):
     for j, xI in enumerate(xi_set):    # Run once without testing to get reference values
         x = np.array(list(range(400)))
-        y = np.loadtxt("../../output/results/1_test_start/cenario"+scenario+"/data_xI="+str(xI)+"_xA="+str(xA)+ ".csv", delimiter=',')
+        y = np.loadtxt("../output/results/1_test_start/cenario"+scenario+"/data_xI="+str(xI)+"_xA="+str(xA)+ ".csv", delimiter=',')
         y = y[:, 1]
 
         y_xx = second_derivatives(y)
@@ -68,7 +68,7 @@ for i, xA in enumerate(xi_set):
         # plt.scatter(x, I_norm)
         # plt.xlabel('Dia de inicio dos testes')
         # plt.title('Número de mortos ao final da epidemia com número de infectados normalizados\nPor dia de início das testagens com xI='+str(xI))
-        # plt.savefig('../../output/results/1_test_start/cenario'+scenario+'/Mortos por dia de inicio da testagem e infectados normalizados xI='+str(xI)+'.png')
+        # plt.savefig('../output/results/1_test_start/cenario'+scenario+'/Mortos por dia de inicio da testagem e infectados normalizados xI='+str(xI)+'.png')
         # # plt.show()
         # plt.close()
         # plt.axvline(x=transition_day, ymin=0, ymax= 1.1 * np.max(y), color='black')
@@ -89,6 +89,6 @@ for ax in axs.flat:
     ax.tick_params(axis='y', labelsize=15)
 
 fig.tight_layout()
-plt.savefig("../../output/results/1_test_start/result.png", dpi=300)
+plt.savefig("../output/results/1_test_start/result.png", dpi=300)
 
-# axs[i, j].savefig('../../output/results/1_test_start/cenario'+scenario+'/Mortos por dia de inicio da testagem xI='+str(xI)+'.png')
+# axs[i, j].savefig('../output/results/1_test_start/cenario'+scenario+'/Mortos por dia de inicio da testagem xI='+str(xI)+'.png')

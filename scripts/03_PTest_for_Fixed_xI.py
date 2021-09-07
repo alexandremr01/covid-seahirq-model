@@ -46,9 +46,9 @@ for scenario, itv in list(itertools.product(scenarios, interventions)):
     plt.xlabel("Dia")
     plt.ylabel("# testes")
     plt.scatter(days, N_Tests)
-    plt.savefig("../../output/results/3_PTest_per_xI/cenario" + scenario + "/itv=" + str(itv) + ".png")
+    plt.savefig("../output/results/3_PTest_per_xI/cenario" + scenario + "/itv=" + str(itv) + ".png")
     plt.close()
 
-    np.savetxt("../../output/results/3_PTest_per_xI/cenario" + scenario + "/itv=" + str(itv) + ".csv", y,
+    np.savetxt("../output/results/3_PTest_per_xI/cenario" + scenario + "/itv=" + str(itv) + ".csv", y,
                    delimiter=",", header="x, r_0")
 

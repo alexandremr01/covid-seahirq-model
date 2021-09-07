@@ -15,7 +15,7 @@ age_strata = 16
 interventions = [[0]]
 
 def calculateForce(outData, parameters):
-    df = pd.read_csv('../../input/cenarios/cenarioBR/beta_gama.csv', sep=',')
+    df = pd.read_csv('../input/cenarios/cenarioBR/beta_gama.csv', sep=',')
     betas = df.values[0:age_strata, 17 + 2 * age_strata:17 + 3 * age_strata]
     print(np.sum(outData.n[-1]))
     force = np.dot(outData.y[-1], betas) + np.dot(np.multiply(outData.a[-1], parameters.alpha), betas) + 0.4*np.dot(outData.e[-1], betas)
@@ -43,6 +43,6 @@ for scenario, itv in list(itertools.product(scenarios, interventions)):
         R0 = R0FromBetaGama(scenario, verbose=True)
         y.append([beta, R0, Iinf, Iacc[-1], deaths, np.average(force)])
 
-    np.savetxt("../../output/results/bifurcation_analysis/cenario" + scenario + "/itv=" + str(itv) + ".csv", y,
+    np.savetxt("../output/results/bifurcation_analysis/cenario" + scenario + "/itv=" + str(itv) + ".csv", y,
                    delimiter=",", header="x, r_0")
 

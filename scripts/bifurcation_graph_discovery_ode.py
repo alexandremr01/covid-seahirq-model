@@ -12,7 +12,7 @@ import pandas as pd
 scenario = 'BR'
 age_strata = 16
 model = SeahirModel(scenario)
-input_folder = '../../input/cenarios/cenarioBR/'
+input_folder = '../input/cenarios/cenarioBR/'
 
 
 class Func:
@@ -201,7 +201,7 @@ for i,param in enumerate(scenarios):
     print(param)
     for j,ic in enumerate(initial_conditions):
         # model.run(I0=1, R0=param, phases=EpidemicPhases(g0=1, itv0=0), verbose=False, attack=None, testing_parameters = TESTING_PARAMETERS_FROM_EPIDEMIOLOGY)
-        # df = pd.read_csv('../../output/' + 'result_data_BR.csv', sep=',')
+        # df = pd.read_csv('../output/' + 'result_data_BR.csv', sep=',')
         # trajectory[i,j] = df.values[:, 12:-18] # evolução do compartimento no tempo com R0 i e condição inicial j. T linhhas x VAR colunas
         func = Func(param)
         trajectory[i,j] = scipy.integrate.odeint(func.get_f(),

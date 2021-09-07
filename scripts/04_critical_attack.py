@@ -46,5 +46,5 @@ for scenario, itv in list(itertools.product(scenarios, interventions)):
                     y.append([xi, attack])
                     break
 
-    np.savetxt("../../output/results/4_critical_attack/cenario" + scenario + "/itv=" + str(itv) + ".csv", y,
+    np.savetxt("../output/results/4_critical_attack/cenario" + scenario + "/itv=" + str(itv) + ".csv", y,
                    delimiter=",", header="x, attack")

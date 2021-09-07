@@ -28,7 +28,7 @@ for uf in scenarios:
 
     for xI in xi_set:
         x = np.array(list(range(400)))
-        y = np.loadtxt("../../output/results/1_test_start/cenario"+uf+"/data_xI="+str(xI)+".csv", delimiter=',')
+        y = np.loadtxt("../output/results/1_test_start/cenario"+uf+"/data_xI="+str(xI)+".csv", delimiter=',')
         y = y[:, 1]
 
         y_xx = second_derivatives(y)
@@ -59,7 +59,7 @@ for uf in scenarios:
         plt.scatter(x, I_norm)
         plt.xlabel('Dia de inicio dos testes')
         plt.title('Número de mortos ao final da epidemia com número de infectados normalizados\nPor dia de início das testagens com xI='+str(xI))
-        plt.savefig('../../output/results/1_test_start/cenario'+uf+'/Mortos por dia de inicio da testagem e infectados normalizados xI='+str(xI)+'.png')
+        plt.savefig('../output/results/1_test_start/cenario'+uf+'/Mortos por dia de inicio da testagem e infectados normalizados xI='+str(xI)+'.png')
         # plt.show()
         plt.close()
         plt.axvline(x=transition_day, ymin=0, ymax= 1.1 * np.max(y), color='black')
@@ -70,6 +70,6 @@ for uf in scenarios:
         plt.xlabel('Dia de inicio dos testes')
         plt.ylabel('Número de mortos ao final da epidemia')
         plt.title('Número de mortos ao final da epidemia\n%s xI=%s' % (name, str(xI)))
-        plt.savefig('../../output/results/1_test_start/cenario'+uf+'/Mortos por dia de inicio da testagem xI='+str(xI)+'.png')
+        plt.savefig('../output/results/1_test_start/cenario'+uf+'/Mortos por dia de inicio da testagem xI='+str(xI)+'.png')
         # plt.show()
         plt.close()

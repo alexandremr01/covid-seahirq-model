@@ -8,7 +8,7 @@ import csv
 # Simulações para caso selvagem - salva tabelas de xI
 
 def save_tables(tables, uf, qnt):
-    filepath = os.path.join('..', '..', 'output', 'testing', 'xI_I0_table_'+uf+'.csv')
+    filepath = os.path.join('..', 'output', 'testing', 'xI_I0_table_'+uf+'.csv')
     with open(filepath, 'w') as csv_file:
         spamwriter = csv.writer(csv_file)
         spamwriter.writerow(np.concatenate((['I1'], ['maxH'], ['mortos'], ['duracao'])))

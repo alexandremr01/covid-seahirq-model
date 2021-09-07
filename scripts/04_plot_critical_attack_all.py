@@ -11,7 +11,7 @@ fig, axs = plt.subplots(4, 4, figsize=(4*default_figsize[0], 4*default_figsize[1
 
 for i, scenario in enumerate(scenarios):
     for j, itv in enumerate(interventions):
-        y = np.loadtxt("../../output/results/4_critical_attack/cenario" + scenario + "/itv=" + str(itv) + ".csv", delimiter=',')
+        y = np.loadtxt("../output/results/4_critical_attack/cenario" + scenario + "/itv=" + str(itv) + ".csv", delimiter=',')
         R = y[:, 1]
         xI = y[:, 0]
         axs[i, j].scatter(xI, R)
@@ -42,4 +42,4 @@ for ax in axs.flat:
     ax.tick_params(axis='y', labelsize=15)
 
 fig.tight_layout()
-plt.savefig("../../output/results/4_critical_attack/result.png", dpi=300)
+plt.savefig("../output/results/4_critical_attack/result.png", dpi=300)

@@ -2,6 +2,8 @@
 
 Run environment with `docker-compose run main`.
 
+Install the code with `cd build`, `premake4 gmake` and finally `make`.
+
 
 # Parameters
 

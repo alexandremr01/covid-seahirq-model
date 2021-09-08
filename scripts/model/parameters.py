@@ -16,7 +16,7 @@ class Parameters:
 
     def __init__(self, age_strata, num_phases, testing_parameters_mode, xI=None, xA=None, model=3, fatality=1.0, changeDir=False, scenario=''):
         if changeDir:
-            self.input_folder = '../input/cenarios/cenario' + scenario + '/'
+            self.input_folder = '../../input/cenarios/cenario' + scenario + '/'
         else:
             self.input_folder = ''
 

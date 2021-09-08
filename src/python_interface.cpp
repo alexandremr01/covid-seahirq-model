@@ -35,11 +35,8 @@ struct Output {
 
 
 struct PhaseParameters {
-    py::array_t<double> gama;
-    py::array_t<double> gama_Qi;
-    py::array_t<double> gama_Qa;
-    py::array_t<double> xI;
-    py::array_t<double> xA;
+    Eigen::Matrix<double, NEA, 1>  xI;
+    Eigen::Matrix<double, NEA, 1>  xA;
     Eigen::Matrix<double, NEA, NEA> beta;
     PhaseParameters() {};
 };
@@ -62,83 +59,79 @@ struct DynamicParameters {
 struct StaticParameters {
     StaticParameters() {};
     
-    py::array_t<double>  Lambda;
+    Eigen::Matrix<double, NEA, 1> Lambda;
     // Taxa de mortalidade equilibrio
-    py::array_t<double>  mu_eq;
+    Eigen::Matrix<double, NEA, 1> mu_eq;
     // Quanto a infectividade do assimptomatico é menor do que a do simptomatico(entre 0 e 1)
-    py::array_t<double>  alpha;
+    Eigen::Matrix<double, NEA, 1> alpha;
     // Fator de correção para infecções pré-sintomáticas
-    py::array_t<double>  ksi;
+    Eigen::Matrix<double, NEA, 1> ksi;
     // Probabilidade de um exposto se tornar sintomatico
-    py::array_t<double>  rho;
+    Eigen::Matrix<double, NEA, 1> rho;
     // Porcentagem de infectados que precisarao de hospitalizacao
-    py::array_t<double>  phi;
+    Eigen::Matrix<double, NEA, 1> phi;
     // Porcentagem de infectados que precisarao de leitos de UTI
-    py::array_t<double>  eta;
+    Eigen::Matrix<double, NEA, 1> eta;
     // Taxa de conversao de individuos infectados
-    py::array_t<double>  a;
+    Eigen::Matrix<double, NEA, 1> a;
     // Taxa de mortalidade covid
-    py::array_t<double>  mu_cov;
+    Eigen::Matrix<double, NEA, 1> mu_cov;
     // Coeficiente de taxa de recuperacao de assintomaticos (modelo SEAIR)
-    py::array_t<double>  theta;
+    Eigen::Matrix<double, NEA, 1> theta;
     // relação entre mortalidade de infectados e mortalidade de hospitalizados
-    py::array_t<double>  gama_A;
+    Eigen::Matrix<double, NEA, 1> gama_A;
     // Coeficiente de taxa de hospitalização de um infectado (modelo SEAHIR-Qia)
-    py::array_t<double>  gama_H;
+    Eigen::Matrix<double, NEA, 1> gama_H;
     // Coeficiente de taxa de recuperação de hospitalizado (modelo SEAHIR-Qia)
-    py::array_t<double>  gama_HR;
+    Eigen::Matrix<double, NEA, 1> gama_HR;
     // Coeficiente de taxa de recuperação do infectado sintomático não quarentenado (modelo SEAHIR-Qia)
-    py::array_t<double>  gama_RI;
+    Eigen::Matrix<double, NEA, 1> gama_RI;
     // Coeficiente de taxa de recuperação do infectado assintomático não quarentenado (modelo SEAHIR-Qia)
-    py::array_t<double>  gama_RA;
+    Eigen::Matrix<double, NEA, 1> gama_RA;
     // Coeficiente de taxa de recuperação do quarentenado sintomático (modelo SEAHIR-Qia)
-    py::array_t<double>  gama_RQI;
+    Eigen::Matrix<double, NEA, 1> gama_RQI;
     // Coeficiente de taxa de recuperação do quarentenado assintomático (modelo SEAHIR-Qia)
-    py::array_t<double>  gama_RQA;
+    Eigen::Matrix<double, NEA, 1> gama_RQA;
     // Coeficiente de taxa de hospitalização do quarentenado sintomático (modelo SEAHIR-Qia)
-    py::array_t<double>  gama_HQI;
+    Eigen::Matrix<double, NEA, 1> gama_HQI;
     // Fração média de óbitos entre infectados
-    py::array_t<double>  Tc;
+    Eigen::Matrix<double, NEA, 1> Tc;
     // Fração média de óbitos entre hospitalizados
-    py::array_t<double>  Tlc;
+    Eigen::Matrix<double, NEA, 1> Tlc;
+
+
+    Eigen::Matrix<double, NEA, 1> gama;
 };
 
-void read_array(double arr[NEA], py::array_t<double> pyArr){
-    py::buffer_info info = pyArr.request();
+// void read_array(double arr[NEA], py::array_t<double> pyArr){
+//     py::buffer_info info = pyArr.request();
     
-    auto ptr = static_cast<double *>(info.ptr);
+//     auto ptr = static_cast<double *>(info.ptr);
 
-    int n = 1;
-    for (auto r: info.shape) {
-      n *= r;
-    }
+//     int n = 1;
+//     for (auto r: info.shape) {
+//       n *= r;
+//     }
 
-    if (n != NEA) { 
-        throw std::exception();
-    }
+//     if (n != NEA) { 
+//         throw std::exception();
+//     }
 
+//     for (int i = 0; i < NEA; i++) {
+//         arr[i] = *ptr++;
+//     }
+// }
+
+void read_array(double arr[NEA], Eigen::Matrix<double, NEA, 1> pyArr){
     for (int i = 0; i < NEA; i++) {
-        arr[i] = *ptr++;
+        arr[i] = pyArr(i, 0);
     }
 }
 
-void read_array_per_day(double array[MAX_DAYS][NEA], py::array_t<double> pyArr, int day) {
-    py::buffer_info info = pyArr.request();
-    
-    auto ptr = static_cast<double *>(info.ptr);
-
-    int n = 1;
-    for (auto r: info.shape) {
-      n *= r;
-    }
-
-    if (n != NEA) { 
-        throw std::exception();
-    }
-
+void read_array_per_day(double array[MAX_DAYS][NEA], Eigen::Matrix<double, NEA, 1>  pyMatrix, int day) {
     for (int j = 0; j < NEA; j++) 
         for (int k=day; k < MAX_DAYS; k++)
-            array[k][j] =  *ptr++;
+            array[k][j] =  pyMatrix(j, 0);
 }
 
 void read_matrix_per_day(double matrix[MAX_DAYS][NEA][NEA], Eigen::Matrix<double, NEA, NEA>  pyMatrix, int day) {
@@ -148,6 +141,14 @@ void read_matrix_per_day(double matrix[MAX_DAYS][NEA][NEA], Eigen::Matrix<double
         for (int j = 0; j < NEA; j++) 
             for (int k=day; k < MAX_DAYS; k++)
                 matrix[k][i][j] =  pyMatrix(i, j);
+}
+
+void view_array(double arr[NEA], char* name){
+    std::cout<< name << ": ";
+    for (int i = 0; i < NEA; i++) {
+        std::cout << arr[i] << " ";
+    }
+    std::cout << std::endl;
 }
 
 Output run_model(int model, Eigen::Matrix<double, NA, NEA>  y0, StaticParameters *p, DynamicParameters *dp) {    
@@ -176,17 +177,46 @@ Output run_model(int model, Eigen::Matrix<double, NA, NEA>  y0, StaticParameters
 
     for (int i =0; i < dp->days.size(); i++){
         int day = dp->days.at(i);
-        read_array_per_day(params.gama, dp->vectorPhaseParameters.at(i)->gama, day);
-        read_array_per_day(params.gama_QI, dp->vectorPhaseParameters.at(i)->gama_Qi, day);
-        read_array_per_day(params.gama_QA, dp->vectorPhaseParameters.at(i)->gama_Qa, day);
         read_array_per_day(params.xI, dp->vectorPhaseParameters.at(i)->xI, day);
         read_array_per_day(params.xA, dp->vectorPhaseParameters.at(i)->xA, day);
         read_matrix_per_day(params.beta, dp->vectorPhaseParameters.at(i)->beta, day);
     }
 
-    for (int i = 0; i < NEA; i++) {
-        std::cout << params.theta[i];
+    bool verbose=false;
+
+    if (verbose){
+        view_array(params.Lambda, "Lambda");
+        view_array(params.mu_eq, "mu_eq");
+        view_array(params.alpha, "alpha");
+        view_array(params.ksi, "ksi");
+        view_array(params.rho, "rho");
+        view_array(params.phi, "phi");
+        view_array(params.eta, "eta");
+        view_array(params.a, "a");
+        view_array(params.mu_cov, "mu_cov");
+        view_array(params.theta, "theta");
+        view_array(params.gama_A, "gama_A");
+        view_array(params.gama_H, "gama_H");
+        view_array(params.gama_HR, "gama_HR");
+        view_array(params.gama_RI, "gama_RI");
+        view_array(params.gama_RA, "gama_RA");
+        view_array(params.gama_RQI, "gama_RQI");
+        view_array(params.gama_RQA, "gama_RQA");
+        view_array(params.gama_HQI, "gama_HQI");
+        view_array(params.Tc, "Tc");
+        view_array(params.Tlc, "Tlc");
     }
+
+    
+    for (int k = 0; k < NEA; k++)
+	{
+		for (int day = 0; day < MAX_DAYS; day++)
+		{
+            params.gama[day][k] = p->gama(k);
+			params.gama_QI[day][k] = params.xI[day][k] * (params.gama_H[k] + params.gama_RI[k]) / (1 - params.xI[day][k]);
+			params.gama_QA[day][k] = params.xA[day][k] * params.gama_RA[k] / (1 - params.xA[day][k]);
+		}
+	}
 
     ScenarioOutput output;
 
@@ -194,6 +224,7 @@ Output run_model(int model, Eigen::Matrix<double, NA, NEA>  y0, StaticParameters
     DerivFunc derivs = get_model(model_selector);
     driver2D_eigen(derivs, y0, &params, &output);
     Output out(output.Y_sum, output.YOUT);
+ 
     return out;
 }
 
@@ -208,9 +239,6 @@ PYBIND11_MODULE(cmodels, m) {
 
     py::class_<PhaseParameters>(m, "PhaseParameters")
         .def(py::init<>())
-        .def_readwrite("gama", &PhaseParameters::gama)
-        .def_readwrite("gama_Qi", &PhaseParameters::gama_Qi)
-        .def_readwrite("gama_Qa", &PhaseParameters::gama_Qa)        
         .def_readwrite("xI", &PhaseParameters::xI)
         .def_readwrite("beta", &PhaseParameters::beta)
         .def_readwrite("xA", &PhaseParameters::xA);
@@ -231,6 +259,7 @@ PYBIND11_MODULE(cmodels, m) {
         .def_readwrite("a", &StaticParameters::a)
         .def_readwrite("mu_cov", &StaticParameters::mu_cov)
         .def_readwrite("theta", &StaticParameters::theta)
+        .def_readwrite("gama", &StaticParameters::gama)
         .def_readwrite("gama_A", &StaticParameters::gama_A)
         .def_readwrite("gama_H", &StaticParameters::gama_H)
         .def_readwrite("gama_HR", &StaticParameters::gama_HR)

@@ -1,4 +1,5 @@
 #include "models.h"
+#include <iostream>
 
 // A soma será a da linha i da matrix f(Dij)
 double sum_beta(int k, double y[][NA], ScenarioParameters *p) {

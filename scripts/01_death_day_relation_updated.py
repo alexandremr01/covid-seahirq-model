@@ -8,7 +8,15 @@ from model.scen_gen import scen_gen, TESTING_PARAMETERS_DIRECT
 import pandas as pd
 from model.parameters import Parameters
 from models import SeahirModel, EpidemicPhases
-import time 
+
+import cmodels
+import numpy as np
+from modelv2 import parameters
+import time
+
+model = 3
+
+
 # Definitions
 I0 = 1
 scenario = 'BR'
@@ -19,6 +27,7 @@ model = SeahirModel(scenario)
 start = time.time()
 prev_time = start
 all_times = []
+
 for xI in xi_set:
     for xA in xi_set:
         print(scenario, ' ', xI)
@@ -31,18 +40,21 @@ for xI in xi_set:
         for d in range(400):
             print("Running day ", d)
             # Runs start testing on day d
-            phases = EpidemicPhases(g0=1, itv0=0)
-            phases.add_phase(g=1, start_day=d, itv_level=0)
-            model.run(I0=I0, R0=None, phases=phases, verbose=False, attack=1.0, xI=xI_array, xA=xA_array, testing_parameters = TESTING_PARAMETERS_DIRECT)
+            phases = parameters.EpidemicPhases(g0=1, itv0=0, xI0=xI_array, xA0=xA_array)
+            phases.add_phase(g=1, start_day=d, itv_level=0, xI=xI_array, xA=xA_array)
 
-            # Store number of deaths
-            outData = OutputData(scenario)
-            deaths = outData.CD[-1]
-            print(deaths)
+            p = parameters.Parameters(scenario='BR', phases=phases, age_strata=age_strata, model=3, fatality=1.0)
+
+            out = cmodels.model(3, p.initial, p.cparameters, p.dynamic_parameters)
+
+            deaths = out.Y_sum[-1][10]
+            print(out.Y_sum[-1][10])
             y.append([d, deaths])
+
             new_time = time.time()
             all_times.append(new_time - prev_time)
             prev_time=new_time
+
 
         np.savetxt("../output/results/1_test_start/cenario" + scenario + "/data_xI=" + str(xI) + "_xA="+ str(xA) + ".csv", y,
                 delimiter=",", header="day, deaths")

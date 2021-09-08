@@ -1,3 +1,24 @@
+
+function queryTerminal(command)
+   local success, handle = pcall(io.popen, command)
+   if not success then 
+       return ""
+   end
+
+   result = handle:read("*a")
+   handle:close()
+   result = string.gsub(result, "\n$", "") -- remove trailing whitespace
+   return result
+end
+
+function getPythonPath()
+   return queryTerminal("python3 -m pybind11 --includes")
+end
+
+function getPythonExtention()   
+   return queryTerminal("python3-config --extension-suffix")
+end
+
 solution "COVID-ITA-TASK"
    configurations { "Release", "Debug", "Optimized"}
    links {"Libraries"}
@@ -17,6 +38,16 @@ solution "COVID-ITA-TASK"
    input_path = input_path:gsub(" ", "\\ ")
    
    defines { output_path, input_path }
+
+   project "python_model_binding"
+      pythonIncludes = getPythonPath()
+      buildoptions {  pythonIncludes }
+      kind "SharedLib"
+      language "C++"
+      targetname("cmodels") -- this name must match the module name in the macro PYBIND11_MODULE(group6_pybind_test, m)
+      targetextension( getPythonExtention() )
+      files ({"../src/python_interface.cpp"})
+      targetprefix("")
 
    ------------------------------ LIBS -----------------------------------------
    project "Libraries"

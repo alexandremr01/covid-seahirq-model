@@ -139,6 +139,99 @@ void driver2D_simple(DerivFunc derivs, double y0[][NA], ScenarioParameters *p, S
     }
 }
 
+void driver2D_eigen(DerivFunc derivs, Eigen::MatrixXd y0, ScenarioParameters *p, ScenarioOutput *o)
+{
+    const int STEPS_PER_DAY = 10;
+    p->day = 0;
+    double (*YOUT)[NA][MAX_DAYS] = o->YOUT;
+    double (*Y_sum)[MAX_DAYS] = o->Y_sum;
+
+    double h = 1, t=0.0, y[NEA][NA] = { { 0 } }, dydt[NEA][NA];
+    double yout[NEA][NA];
+
+    for (int k = 0; k < NEA; k++) {
+        y[k][Var::S] =  y0(k, Var::S);
+        y[k][Var::E] =  y0(k, Var::E);
+        y[k][Var::A] =  y0(k, Var::A);
+        y[k][Var::H] =  y0(k, Var::H);
+		y[k][Var::D] = y0(k, Var::D);
+		y[k][Var::I] =  y0(k, Var::I);
+        y[k][Var::R] =  y0(k, Var::R);
+		y[k][Var::Ri] = y0(k, Var::Ri);
+        y[k][Var::Qi] =  y0(k, Var::Qi);
+        y[k][Var::Qa] =  y0(k, Var::Qa);
+        y[k][Var::N] =  y0(k, Var::N);
+        y[k][Var::C] =  y0(k, Var::C);
+        y[k][Var::L] =  y0(k, Var::L);
+    }
+    sumY(y, p, o);
+	
+    for (int k = 0; k < NEA; k++)
+    {
+        YOUT[k][Var::S][p->day] = y[k][Var::S];
+        YOUT[k][Var::E][p->day] = y[k][Var::E];
+        YOUT[k][Var::I][p->day] = y[k][Var::I];
+        YOUT[k][Var::R][p->day] = y[k][Var::R];
+		YOUT[k][Var::Ri][p->day] = y[k][Var::Ri];
+        YOUT[k][Var::N][p->day] = y[k][Var::N];
+        YOUT[k][Var::A][p->day] = y[k][Var::A];
+        YOUT[k][Var::H][p->day] = y[k][Var::H];
+		YOUT[k][Var::D][p->day] = y[k][Var::D];
+        YOUT[k][Var::Qi][p->day] = y[k][Var::Qi];
+        YOUT[k][Var::Qa][p->day] = y[k][Var::Qa];
+        YOUT[k][Var::C][p->day] = y[k][Var::C];
+        YOUT[k][Var::L][p->day] = y[k][Var::L];
+    }
+
+    for (int i = 1; i < MAX_DAYS; i++)
+    {
+        float t2=t;
+        p->day = i;
+        for (int i=0; i < STEPS_PER_DAY; i++){
+            derivs(t2, y, dydt, p);
+            rk42D(y, dydt, t2, h/STEPS_PER_DAY, yout, derivs, p);
+            //memcpy(y, yout, NEA*NA*sizeof(double));
+            for (int k = 0; k < NEA; k++)
+            {
+                y[k][Var::S] =  yout[k][Var::S];
+                y[k][Var::E] =  yout[k][Var::E];
+                y[k][Var::I] =  yout[k][Var::I];
+                y[k][Var::R] =  yout[k][Var::R];
+                y[k][Var::Ri] = yout[k][Var::Ri];
+                y[k][Var::N] =  yout[k][Var::N];
+                y[k][Var::A] =  yout[k][Var::A];
+                y[k][Var::C] =  yout[k][Var::C];
+                y[k][Var::D] = yout[k][Var::D];
+                y[k][Var::H] =  yout[k][Var::H];
+                y[k][Var::L] =  yout[k][Var::L];
+                y[k][Var::Qi] = yout[k][Var::Qi];
+                y[k][Var::Qa] = yout[k][Var::Qa];
+            }
+            update_params(y, p);
+            t2 += h/STEPS_PER_DAY;
+        }
+        sumY(y, p, o);
+        
+        for (int k = 0; k < NEA; k++)
+        {
+            YOUT[k][Var::S][p->day] = y[k][Var::S];
+            YOUT[k][Var::E][p->day] = y[k][Var::E];
+            YOUT[k][Var::I][p->day] = y[k][Var::I];
+            YOUT[k][Var::R][p->day] = y[k][Var::R];
+			YOUT[k][Var::Ri][p->day] = y[k][Var::Ri];
+            YOUT[k][Var::N][p->day] = y[k][Var::N];
+            YOUT[k][Var::A][p->day] = y[k][Var::A];
+            YOUT[k][Var::C][p->day] = y[k][Var::C];
+            YOUT[k][Var::H][p->day] = y[k][Var::H];
+			YOUT[k][Var::D][p->day] = y[k][Var::D];
+            YOUT[k][Var::L][p->day] = y[k][Var::L];
+            YOUT[k][Var::Qi][p->day] = y[k][Var::Qi];
+            YOUT[k][Var::Qa][p->day] = y[k][Var::Qa];
+        }
+        t += h;
+    }
+}
+
 int cmp(const void *a, const void *b)
 {
     double arg1 = *(const double*)a;

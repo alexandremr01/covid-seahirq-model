@@ -38,21 +38,12 @@ solution "COVID-ITA-TASK"
    input_path = input_path:gsub(" ", "\\ ")
    
    defines { output_path, input_path }
-
-   project "python_model_binding"
-      pythonIncludes = getPythonPath()
-      buildoptions {  pythonIncludes }
-      kind "SharedLib"
-      language "C++"
-      targetname("cmodels") -- this name must match the module name in the macro PYBIND11_MODULE(group6_pybind_test, m)
-      targetextension( getPythonExtention() )
-      files ({"../src/python_interface.cpp"})
-      targetprefix("")
-
    ------------------------------ LIBS -----------------------------------------
    project "Libraries"
       kind "StaticLib"
       language "C++"
+      buildoptions {  "-fPIC" }
+
       files { "../src/solvers.cpp",
               "../src/real_data_reader.cpp",
               "../src/scenario.cpp",
@@ -68,6 +59,20 @@ solution "COVID-ITA-TASK"
 
       configuration "Optimized"
          flags { "OptimizeSize", "OptimizeSpeed", "EnableSSE", "EnableSSE2" }
+      
+   project "python_model_binding"
+      pythonIncludes = getPythonPath()
+      buildoptions {  pythonIncludes, "-fPIC" }
+      kind "SharedLib"
+      language "C++"
+      targetname("cmodels") -- this name must match the module name in the macro PYBIND11_MODULE(group6_pybind_test, m)
+      targetextension( getPythonExtention() )
+      files ({
+            "../src/python_interface.cpp"
+         }
+      )
+      targetprefix("")
+   
 
    ------------------------------ BINS -----------------------------------------
    project "spatial_covid0d_estrat"

@@ -8,11 +8,59 @@
 #include <exception>      // std::exception
 
 #include <Eigen/LU>
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 
-struct Parameters {
-    Parameters() {};
+struct Output {
+    std::vector<Eigen::Matrix<double, NA, 1>> Y_sum;
+    std::vector<Eigen::Matrix<double, NEA, NA>> YOUT;
+
+    Output(double Y_sum[NA][MAX_DAYS], double YOUT[NEA][NA][MAX_DAYS]) {
+        for (int i=0; i<MAX_DAYS; i++){
+            Eigen::Matrix<double, NA, 1> Y_sum_daily;
+            Eigen::Matrix<double, NEA, NA> YOUT_daily;
+            for (int j=0; j<NA; j++){
+                Y_sum_daily(j, 0) = Y_sum[j][i];
+                for (int k=0; k<NEA; k++){
+                    YOUT_daily(k, j) = YOUT[k][j][i];
+                }
+            }
+            this->Y_sum.emplace_back(Y_sum_daily);
+            this->YOUT.emplace_back(YOUT_daily);
+        }
+    };
+    Output(){};
+};
+
+
+struct PhaseParameters {
+    py::array_t<double> gama;
+    py::array_t<double> gama_Qi;
+    py::array_t<double> gama_Qa;
+    py::array_t<double> xI;
+    py::array_t<double> xA;
+    Eigen::Matrix<double, NEA, NEA> beta;
+    PhaseParameters() {};
+};
+
+struct DynamicParameters {
+    public:
+        DynamicParameters(PhaseParameters *phase0Parameters){ 
+            this->vectorPhaseParameters.push_back(phase0Parameters); 
+            this->days.push_back(0);
+        };
+        void addPhase(int startDay, PhaseParameters *phaseParameters){ 
+            this->vectorPhaseParameters.push_back(phaseParameters); 
+            this->days.push_back(startDay);
+        };
+
+        std::vector<PhaseParameters*> vectorPhaseParameters;
+        std::vector<int> days;
+};
+
+struct StaticParameters {
+    StaticParameters() {};
     
     py::array_t<double>  Lambda;
     // Taxa de mortalidade equilibrio
@@ -53,21 +101,6 @@ struct Parameters {
     py::array_t<double>  Tc;
     // Fração média de óbitos entre hospitalizados
     py::array_t<double>  Tlc;
-
-    // ---- Parâmetros que variam no tempo -----
-
-    // Taxa de contaminacao
-    // Eigen::Matrix<double, MAX_DAYS, NEA> beta[MAX_DAYS][NEA][NEA];
-    // Taxa de recuperacao
-    Eigen::Matrix<double, MAX_DAYS, NEA> gama;
-    // Coeficiente de taxa de movimento do infectado sintomático para a quarentena (modelo SEAHIR-Qia)
-    Eigen::Matrix<double, MAX_DAYS, NEA> gama_QI;
-    // Coeficiente de taxa de movimento do infectado assintomático para a quarentena (modelo SEAHIR-Qia)
-    Eigen::Matrix<double, MAX_DAYS, NEA> gama_QA;
-    // Probabilidade de testar um infectado sintomatico (modelo SEAHIR-Qia)
-    Eigen::Matrix<double, MAX_DAYS, NEA> xI;
-    // Probabilidade de testar um infectado assintomatico (modelo SEAHIR-Qia)
-    Eigen::Matrix<double, MAX_DAYS, NEA> xA;
 };
 
 void read_array(double arr[NEA], py::array_t<double> pyArr){
@@ -89,15 +122,35 @@ void read_array(double arr[NEA], py::array_t<double> pyArr){
     }
 }
 
-void read_array_per_day(double array[MAX_DAYS][NEA], Eigen::Matrix<double, MAX_DAYS, NEA> matrix) {
-    for (int i=0; i<MAX_DAYS; i++)
-        for (int j=0; i<NEA; i++)
-            array[i][j] = matrix(i, j);
+void read_array_per_day(double array[MAX_DAYS][NEA], py::array_t<double> pyArr, int day) {
+    py::buffer_info info = pyArr.request();
+    
+    auto ptr = static_cast<double *>(info.ptr);
+
+    int n = 1;
+    for (auto r: info.shape) {
+      n *= r;
+    }
+
+    if (n != NEA) { 
+        throw std::exception();
+    }
+
+    for (int j = 0; j < NEA; j++) 
+        for (int k=day; k < MAX_DAYS; k++)
+            array[k][j] =  *ptr++;
 }
 
-void run_model(int model, Eigen::MatrixXd y0, Parameters *p) {
-    std::cout << "Model chosen: "<<   model << std::endl;
-    
+void read_matrix_per_day(double matrix[MAX_DAYS][NEA][NEA], Eigen::Matrix<double, NEA, NEA>  pyMatrix, int day) {
+    if (pyMatrix.rows() != NEA ||pyMatrix.rows() != NEA)
+        throw std::exception();
+    for (int i = 0; i < NEA; i++) 
+        for (int j = 0; j < NEA; j++) 
+            for (int k=day; k < MAX_DAYS; k++)
+                matrix[k][i][j] =  pyMatrix(i, j);
+}
+
+Output run_model(int model, Eigen::Matrix<double, NA, NEA>  y0, StaticParameters *p, DynamicParameters *dp) {    
     ScenarioParameters params;
 
     read_array(params.Lambda, p->Lambda);
@@ -121,62 +174,73 @@ void run_model(int model, Eigen::MatrixXd y0, Parameters *p) {
     read_array(params.Tc, p->Tc);
     read_array(params.Tlc, p->Tlc);
 
-    read_array_per_day(params.gama, p->gama);
-    read_array_per_day(params.gama_QI, p->gama_QI);
-    read_array_per_day(params.gama_QA, p->gama_QA);
-    read_array_per_day(params.xI, p->xI);
-    read_array_per_day(params.xA, p->xA);;
+    for (int i =0; i < dp->days.size(); i++){
+        int day = dp->days.at(i);
+        read_array_per_day(params.gama, dp->vectorPhaseParameters.at(i)->gama, day);
+        read_array_per_day(params.gama_QI, dp->vectorPhaseParameters.at(i)->gama_Qi, day);
+        read_array_per_day(params.gama_QA, dp->vectorPhaseParameters.at(i)->gama_Qa, day);
+        read_array_per_day(params.xI, dp->vectorPhaseParameters.at(i)->xI, day);
+        read_array_per_day(params.xA, dp->vectorPhaseParameters.at(i)->xA, day);
+        read_matrix_per_day(params.beta, dp->vectorPhaseParameters.at(i)->beta, day);
+    }
 
     for (int i = 0; i < NEA; i++) {
         std::cout << params.theta[i];
     }
 
+    ScenarioOutput output;
 
-    // DerivFunc derivs = get_model(Model::Enum(model));
-
-        
-    // driver2D_simple(derivs, y0, &params, &output);
-    
-	// if (write_output(output_filename, &output) == 1) {
-	// 	return 1;
-	// }
-	// else {
-	// 	printf("Exececucao bem sucedida. Verificar consistencia dos resultados.\n");
-	// 	return 0;
-	// }
+    auto model_selector = static_cast<Model::Enum>(model);
+    DerivFunc derivs = get_model(model_selector);
+    driver2D_eigen(derivs, y0, &params, &output);
+    Output out(output.Y_sum, output.YOUT);
+    return out;
 }
 
 
 PYBIND11_MODULE(cmodels, m) {
     m.doc() = "pybind11 cmodels plugin"; // optional module docstring
 
-    py::class_<Parameters>(m, "Parameters")
+    py::class_<Output>(m, "Output")
         .def(py::init<>())
-        .def_readwrite("Lambda", &Parameters::Lambda)
-        .def_readwrite("mu_eq", &Parameters::mu_eq)
-        .def_readwrite("alpha", &Parameters::alpha)
-        .def_readwrite("ksi", &Parameters::ksi)
-        .def_readwrite("rho", &Parameters::rho)
-        .def_readwrite("phi", &Parameters::phi)
-        .def_readwrite("eta", &Parameters::eta)
-        .def_readwrite("a", &Parameters::a)
-        .def_readwrite("mu_cov", &Parameters::mu_cov)
-        .def_readwrite("theta", &Parameters::theta)
-        .def_readwrite("gama_A", &Parameters::gama_A)
-        .def_readwrite("gama_H", &Parameters::gama_H)
-        .def_readwrite("gama_HR", &Parameters::gama_HR)
-        .def_readwrite("gama_RI", &Parameters::gama_RI)
-        .def_readwrite("gama_RA", &Parameters::gama_RA)
-        .def_readwrite("gama_RQI", &Parameters::gama_RQI)
-        .def_readwrite("gama_RQA", &Parameters::gama_RQA)
-        .def_readwrite("gama_HQI", &Parameters::gama_HQI)
-        .def_readwrite("Tc", &Parameters::Tc)
-        .def_readwrite("Tlc", &Parameters::Tlc)
-        .def_readwrite("gama", &Parameters::gama)
-        .def_readwrite("gama_QI", &Parameters::gama_QI)
-        .def_readwrite("gama_QA", &Parameters::gama_QA)
-        .def_readwrite("xI", &Parameters::xI)
-        .def_readwrite("xA", &Parameters::xA);
+        .def_readwrite("Y_sum", &Output::Y_sum)
+        .def_readwrite("YOUT", &Output::YOUT);
+
+    py::class_<PhaseParameters>(m, "PhaseParameters")
+        .def(py::init<>())
+        .def_readwrite("gama", &PhaseParameters::gama)
+        .def_readwrite("gama_Qi", &PhaseParameters::gama_Qi)
+        .def_readwrite("gama_Qa", &PhaseParameters::gama_Qa)        
+        .def_readwrite("xI", &PhaseParameters::xI)
+        .def_readwrite("beta", &PhaseParameters::beta)
+        .def_readwrite("xA", &PhaseParameters::xA);
+    
+    py::class_<DynamicParameters>(m, "DynamicParameters")
+        .def(py::init<PhaseParameters*>())
+        .def("addPhase", &DynamicParameters::addPhase);
+
+    py::class_<StaticParameters>(m, "StaticParameters")
+        .def(py::init<>())
+        .def_readwrite("Lambda", &StaticParameters::Lambda)
+        .def_readwrite("mu_eq", &StaticParameters::mu_eq)
+        .def_readwrite("alpha", &StaticParameters::alpha)
+        .def_readwrite("ksi", &StaticParameters::ksi)
+        .def_readwrite("rho", &StaticParameters::rho)
+        .def_readwrite("phi", &StaticParameters::phi)
+        .def_readwrite("eta", &StaticParameters::eta)
+        .def_readwrite("a", &StaticParameters::a)
+        .def_readwrite("mu_cov", &StaticParameters::mu_cov)
+        .def_readwrite("theta", &StaticParameters::theta)
+        .def_readwrite("gama_A", &StaticParameters::gama_A)
+        .def_readwrite("gama_H", &StaticParameters::gama_H)
+        .def_readwrite("gama_HR", &StaticParameters::gama_HR)
+        .def_readwrite("gama_RI", &StaticParameters::gama_RI)
+        .def_readwrite("gama_RA", &StaticParameters::gama_RA)
+        .def_readwrite("gama_RQI", &StaticParameters::gama_RQI)
+        .def_readwrite("gama_RQA", &StaticParameters::gama_RQA)
+        .def_readwrite("gama_HQI", &StaticParameters::gama_HQI)
+        .def_readwrite("Tc", &StaticParameters::Tc)
+        .def_readwrite("Tlc", &StaticParameters::Tlc);
 
     m.def("model", &run_model, "A function which adds two numbers");
 

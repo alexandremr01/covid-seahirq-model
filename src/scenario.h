@@ -1,6 +1,7 @@
 #pragma once
 
 #include "macros.h"
+#include <Eigen/LU>
 
 
 struct Var {
@@ -96,5 +97,6 @@ double xA[MAX_DAYS][NEA];
 
 void sumY(double y[][NA], ScenarioParameters *p, ScenarioOutput *output);
 void driver2D_simple(DerivFunc derivs, double y0[][NA], ScenarioParameters *params, ScenarioOutput *output);
+void driver2D_eigen(DerivFunc derivs, Eigen::Matrix<double, NA, NEA> y0, ScenarioParameters *p, ScenarioOutput *o);
 //void run_benchmark(DerivFunc derivs, double beta_scalar, ScenarioParameters *params);
 int write_output(const char* filename, ScenarioOutput *o);

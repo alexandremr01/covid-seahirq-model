@@ -139,7 +139,7 @@ void driver2D_simple(DerivFunc derivs, double y0[][NA], ScenarioParameters *p, S
     }
 }
 
-void driver2D_eigen(DerivFunc derivs, Eigen::MatrixXd y0, ScenarioParameters *p, ScenarioOutput *o)
+void driver2D_eigen(DerivFunc derivs, Eigen::Matrix<double, NA, NEA> y0, ScenarioParameters *p, ScenarioOutput *o)
 {
     const int STEPS_PER_DAY = 10;
     p->day = 0;
@@ -150,19 +150,19 @@ void driver2D_eigen(DerivFunc derivs, Eigen::MatrixXd y0, ScenarioParameters *p,
     double yout[NEA][NA];
 
     for (int k = 0; k < NEA; k++) {
-        y[k][Var::S] =  y0(k, Var::S);
-        y[k][Var::E] =  y0(k, Var::E);
-        y[k][Var::A] =  y0(k, Var::A);
-        y[k][Var::H] =  y0(k, Var::H);
-		y[k][Var::D] = y0(k, Var::D);
-		y[k][Var::I] =  y0(k, Var::I);
-        y[k][Var::R] =  y0(k, Var::R);
-		y[k][Var::Ri] = y0(k, Var::Ri);
-        y[k][Var::Qi] =  y0(k, Var::Qi);
-        y[k][Var::Qa] =  y0(k, Var::Qa);
-        y[k][Var::N] =  y0(k, Var::N);
-        y[k][Var::C] =  y0(k, Var::C);
-        y[k][Var::L] =  y0(k, Var::L);
+        y[k][Var::S] =  y0(Var::S, k);
+        y[k][Var::E] =  y0(Var::E, k);
+        y[k][Var::A] =  y0(Var::A, k);
+        y[k][Var::H] =  y0(Var::H, k);
+		y[k][Var::D] = y0(Var::D, k);
+		y[k][Var::I] =  y0(Var::I, k);
+        y[k][Var::R] =  y0(Var::R, k);
+		y[k][Var::Ri] = y0(Var::Ri, k);
+        y[k][Var::Qi] =  y0(Var::Qi, k);
+        y[k][Var::Qa] =  y0(Var::Qa, k);
+        y[k][Var::N] =  y0(Var::N, k);
+        y[k][Var::C] =  y0(Var::C, k);
+        y[k][Var::L] =  y0(Var::L, k);
     }
     sumY(y, p, o);
 	

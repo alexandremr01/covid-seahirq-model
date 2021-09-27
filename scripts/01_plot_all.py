@@ -1,59 +1,46 @@
-from utils import OutputData, write_testing_parameters, get_day_to_start_testing, second_derivatives
-from models import SeahirModel, EpidemicPhases
 import numpy as np
-from model.nextgen import calculateR0, R0FromBetaGama, R0FromxIxA
-import os
-import itertools
-from model.scen_gen import scen_gen, TESTING_PARAMETERS_DIRECT
-import pandas as pd
-from model.parameters import Parameters
 import matplotlib.pyplot as plt
+import itertools
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
+
+offset = mcolors.TwoSlopeNorm( vcenter=1.00, vmin=0.48, vmax=2.43)
 
 I0 = 1
 scenarios = ['BR', 'GR', 'NG', 'US']
-xi_set = [0.2, 0.5, 0.7, 0.9]
-age_strata=16
+age_strata = 16
+interventions = [0, 6, 8, 9]
 default_figsize = [6.4, 4.8]
-
 fig, axs = plt.subplots(4, 4, figsize=(4*default_figsize[0], 4*default_figsize[1]))
+cmap=cm.get_cmap('bwr')
+
+Rmins=[]
+epsilon = 1e-3
 
 for i, scenario in enumerate(scenarios):
-    model = SeahirModel(scenario)
-    phases = EpidemicPhases(g0=1, itv0=0)
-    # phases.add_phase(g=1, start_day=0, itv_level=0)
-    xI_array = np.full(age_strata, 0, dtype=np.float64)
-    xA_array = np.zeros(age_strata, dtype=np.float64)
+    for j, itv in enumerate(interventions):
+        efficient_points_x = []
+        efficient_points_y=[]
 
-    model.run(I0=I0, R0=None, phases=phases, verbose=False, attack=1.0, xI=xI_array, xA=xA_array, testing_parameters = TESTING_PARAMETERS_DIRECT)
-    outData = OutputData(scenario)
-    I_norm = outData.I[0:400] / np.max(outData.I[0:400])
-    no_test_deaths = outData.CD[-1]
-    for j, xI in enumerate(xi_set):    # Run once without testing to get reference values
-        x = np.array(list(range(400)))
-        y = np.loadtxt("../output/results/1_test_start/cenario"+scenario+"/data_xI="+str(xI)+".csv", delimiter=',')
-        y = y[:, 1]
+        y = np.loadtxt("../output/results/01_R0_xI_xA/scenario" + scenario + "/itv=" + str(itv) + ".csv", delimiter=',')
+        R_raw = y[:, 2]
+        xI = y[:, 0]
+        xA = y[:, 1]
+        m = 100
 
-        y_xx = second_derivatives(y)
-        print(y_xx)
+        R = np.zeros((m, m), dtype=np.float64)
+        for p in range(m):
+            for q in range(m):
+                R[p, q] = R_raw[p*100 + q]
+                
+                if abs(R_raw[p*100 + q] - 1) < epsilon:
+                    efficient_points_x.append(xA[p*100 + q])
+                    efficient_points_y.append(xI[p*100 + q])
 
-        aux = np.argwhere(y_xx < -0.1)
-        if len(aux)>1 :
-            transition_day = np.min(aux)
-        else:
-            transition_day = 0
+        Rmins.append(np.min(R))
 
-        y_np = np.array(y)
-        y_np = y_np / no_test_deaths
-        textstr = '\n'.join(
-            [r'Óbitos sem testagem:%.0f' % (np.max(y)), 'Óbitos com testagem no D0: %.0f' % (np.min(y)), 'Óbitos evitáveis: %.0f' % (np.max(y) - np.min(y)),
-            'Variação: {:.2%} '.format((np.max(y) - np.min(y)) / np.max(y)),
-            'Dia de virada da 2a derivada: %d' % (transition_day)])
-            #  'Infectados na virada=%.2e' % (outData.I[transition_day])])
-        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-        # axs[i, j].text(0.5, 0.2, textstr, transform=plt.gca().transAxes, fontsize='small', verticalalignment='center', bbox=props)
-        y_np[0] = np.min(y)
-        # axs[i, j].axvline(x=transition_day, ymin=0, ymax=1.1 * np.max(y), color='black')
-
+        pcm = axs[i, j].imshow(R, extent=[np.min(xA), np.max(xA), np.min(xI), np.max(xI)], origin='lower', interpolation='none', cmap=cmap, norm=offset)
+        axs[i, j].plot(efficient_points_x, efficient_points_y, color='black')
         if scenario == 'BR':
             name = "Brasil"
         elif scenario == 'GR':
@@ -62,32 +49,28 @@ for i, scenario in enumerate(scenarios):
             name = "Nigéria"
         elif scenario == 'US':
             name = "EUA"
-            
-        # y_np = (y_np-np.min(y_np))/(np.max(y_np)-np.min(y_np))
-        # plt.scatter(x, y_np)
-        # plt.scatter(x, I_norm)
-        # plt.xlabel('Dia de inicio dos testes')
-        # plt.title('Número de mortos ao final da epidemia com número de infectados normalizados\nPor dia de início das testagens com xI='+str(xI))
-        # plt.savefig('../output/results/1_test_start/cenario'+scenario+'/Mortos por dia de inicio da testagem e infectados normalizados xI='+str(xI)+'.png')
-        # # plt.show()
-        # plt.close()
-        # plt.axvline(x=transition_day, ymin=0, ymax= 1.1 * np.max(y), color='black')
 
-        # axs[i, j].text(0.5, 0.2, textstr, transform=plt.gca().transAxes, fontsize='small', verticalalignment='center', bbox=props)
-        y[0] = np.min(y)
-        axs[i, j].plot(x, y)
-        # axs[i, j].xlabel('Dia de inicio dos testes')
-        # axs[i, j].ylabel('Número de mortos ao final da epidemia')
-        axs[i, j].set_title('Número de mortos ao final da epidemia\n%s xI=%s' % (name, str(xI)), {'fontsize': 20})
-
+        if itv == 0:
+            itvname = ' - Sem intervenção'
+        elif itv == 6:
+            itvname = ' - Isolamento Vertical'
+        elif itv == 8:
+            itvname = ' - Distanciamento social'
+        elif itv == 9:
+            itvname = ' - Restrições no trabalho'
+        axs[i, j].set_title(name+itvname, {'fontsize': 20})
 
 for ax in axs.flat:
-    ax.set_xlabel('Dia de início dos testes', fontsize=18)
-    ax.set_ylabel('Número de mortos ao final', fontsize=18)
+    ax.set_xlabel('xA', fontsize=18)
+    ax.set_ylabel('xI', fontsize=18)
     ax.tick_params(axis='x', labelsize=15)
     ax.tick_params(axis='y', labelsize=15)
 
 fig.tight_layout()
-plt.savefig("../output/results/1_test_start/result.png", dpi=300)
 
-# axs[i, j].savefig('../output/results/1_test_start/cenario'+scenario+'/Mortos por dia de inicio da testagem xI='+str(xI)+'.png')
+print(np.min(Rmins))
+im=cm.ScalarMappable(cmap=cmap, norm=offset)
+cb=  fig.colorbar(im, ax=axs.ravel().tolist())
+
+cb.set_label("R0", fontsize=15)
+plt.savefig("../output/results/01_R0_xI_xA/result.png", dpi=300)

@@ -1,8 +1,7 @@
 from .utils import read_matrix
 import numpy as np
-from scipy.sparse.linalg import eigs
-from .nextgen import calculateR0
 
+INPUTF = '../input/cenarios/cenario'
 contact_matrix_all_file = 'contact_matrix_all.csv'
 contact_matrix_home_file = 'contact_matrix_home.csv'
 contact_matrix_work_file = 'contact_matrix_work.csv'
@@ -10,16 +9,16 @@ contact_matrix_school_file = 'contact_matrix_school.csv'
 contact_matrix_other_file = 'contact_matrix_other.csv'
 
 class ContactMatrixFactory:
-    def __init__(self, age_strata):
-        self.matrix_all = read_matrix(contact_matrix_all_file, age_strata)
-        self.matrix_home = read_matrix(contact_matrix_home_file, age_strata)
-        self.matrix_work = read_matrix(contact_matrix_work_file, age_strata)
-        self.matrix_school = read_matrix(contact_matrix_school_file, age_strata)
-        self.matrix_other = read_matrix(contact_matrix_other_file, age_strata)
+    def __init__(self, age_strata, scenario):
+        input_folder = INPUTF + scenario + '/'
+        self.matrix_all = read_matrix(input_folder+ contact_matrix_all_file, age_strata)
+        self.matrix_home = read_matrix(input_folder+ contact_matrix_home_file, age_strata)
+        self.matrix_work = read_matrix(input_folder+contact_matrix_work_file, age_strata)
+        self.matrix_school = read_matrix(input_folder+contact_matrix_school_file, age_strata)
+        self.matrix_other = read_matrix(input_folder+contact_matrix_other_file, age_strata)
         self.age_strata = age_strata
 
-
-    def get_matrix(self, intervention, rel_pop, attack, age_strata, input_folder, parameters, R0):
+    def get_matrix(self, intervention, rel_pop, attack, age_strata):
         # Escala a matriz de contato pelo perfil demográfico e escalona a mesma pelo auto-valor dominante
         matrix_home = np.copy(self.matrix_home)
         matrix_work = np.copy(self.matrix_work)
@@ -39,14 +38,8 @@ class ContactMatrixFactory:
                 matrix_work[i, j] = attack_weight[i] * matrix_work[i, j] / rel_pop[i] #* pop[i] / pop[j]
                 matrix_other[i, j] = attack_weight[i] * matrix_other[i, j] / rel_pop[i] #* pop[i] / pop[j]
 
-        R0_raw = calculateR0(input_folder, matrix, parameters.xI[0], parameters.xA[0], False)
-        R0_post = R0
-        if attack is None:
-            R0_ratio = R0/R0_raw
-            R0_ratio_post = R0_post / R0_raw
-        else:
-            R0_ratio = attack
-            R0_ratio_post = attack
+        R0_ratio = attack
+        R0_ratio_post = attack
 
         C_all_pre = R0_ratio * matrix
         C_home_pre = R0_ratio * matrix_home

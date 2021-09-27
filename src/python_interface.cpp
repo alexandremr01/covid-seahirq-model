@@ -4,17 +4,20 @@
 #include "models.h"
 #include "solvers.h"
 #include <iostream>
+#include <string>
 #include <pybind11/eigen.h>
 #include <exception>      // std::exception
 
 #include <Eigen/LU>
+#include <Eigen/Eigenvalues> 
+
 #include <pybind11/stl.h>
 
 namespace py = pybind11;
 
 struct Output {
-    std::vector<Eigen::Matrix<double, NA, 1>> Y_sum;
-    std::vector<Eigen::Matrix<double, NEA, NA>> YOUT;
+    std::vector<Eigen::Matrix<double, NA, 1>> Y_sum;  // for each day: # individuals per disease stage
+    std::vector<Eigen::Matrix<double, NEA, NA>> YOUT; // for each day: # invidiuals per age strata and disease stage
 
     Output(double Y_sum[NA][MAX_DAYS], double YOUT[NEA][NA][MAX_DAYS]) {
         for (int i=0; i<MAX_DAYS; i++){
@@ -43,11 +46,31 @@ struct PhaseParameters {
 
 struct DynamicParameters {
     public:
-        DynamicParameters(PhaseParameters *phase0Parameters){ 
+        DynamicParameters(
+            Eigen::Matrix<double, NEA, 1>  xI0,
+            Eigen::Matrix<double, NEA, 1>  xA0,
+            Eigen::Matrix<double, NEA, NEA> beta0
+        ){ 
+            // std::cout << " Phase 0 " << phase0Parameters.xI;
+            PhaseParameters *phase0Parameters = new PhaseParameters();
+            phase0Parameters->xI = xI0;
+            phase0Parameters->xA = xA0;
+            phase0Parameters->beta = beta0;
             this->vectorPhaseParameters.push_back(phase0Parameters); 
             this->days.push_back(0);
         };
-        void addPhase(int startDay, PhaseParameters *phaseParameters){ 
+        void addPhase(
+            int startDay, 
+            Eigen::Matrix<double, NEA, 1>  xI,
+            Eigen::Matrix<double, NEA, 1>  xA,
+            Eigen::Matrix<double, NEA, NEA> beta
+        ){ 
+            // std::cout << " Phase 0 " << phase0Parameters.xI;
+            PhaseParameters *phaseParameters = new PhaseParameters();
+            phaseParameters->xI = xI;
+            phaseParameters->xA = xA;
+            phaseParameters->beta = beta;
+            // std::cout << " Phase: " << phaseParameters->xI;
             this->vectorPhaseParameters.push_back(phaseParameters); 
             this->days.push_back(startDay);
         };
@@ -101,26 +124,9 @@ struct StaticParameters {
 
 
     Eigen::Matrix<double, NEA, 1> gama;
+
+    Eigen::Matrix<double, NEA, 1> rel_pop;
 };
-
-// void read_array(double arr[NEA], py::array_t<double> pyArr){
-//     py::buffer_info info = pyArr.request();
-    
-//     auto ptr = static_cast<double *>(info.ptr);
-
-//     int n = 1;
-//     for (auto r: info.shape) {
-//       n *= r;
-//     }
-
-//     if (n != NEA) { 
-//         throw std::exception();
-//     }
-
-//     for (int i = 0; i < NEA; i++) {
-//         arr[i] = *ptr++;
-//     }
-// }
 
 void read_array(double arr[NEA], Eigen::Matrix<double, NEA, 1> pyArr){
     for (int i = 0; i < NEA; i++) {
@@ -130,8 +136,10 @@ void read_array(double arr[NEA], Eigen::Matrix<double, NEA, 1> pyArr){
 
 void read_array_per_day(double array[MAX_DAYS][NEA], Eigen::Matrix<double, NEA, 1>  pyMatrix, int day) {
     for (int j = 0; j < NEA; j++) 
-        for (int k=day; k < MAX_DAYS; k++)
+        for (int k=day; k < MAX_DAYS; k++){ 
             array[k][j] =  pyMatrix(j, 0);
+                // std::cout << "Preenchendo dia " << k << " faixa " << j << " com " << pyMatrix(j, 0);
+        }
 }
 
 void read_matrix_per_day(double matrix[MAX_DAYS][NEA][NEA], Eigen::Matrix<double, NEA, NEA>  pyMatrix, int day) {
@@ -143,7 +151,7 @@ void read_matrix_per_day(double matrix[MAX_DAYS][NEA][NEA], Eigen::Matrix<double
                 matrix[k][i][j] =  pyMatrix(i, j);
 }
 
-void view_array(double arr[NEA], char* name){
+void view_array(double arr[NEA], std::string name){
     std::cout<< name << ": ";
     for (int i = 0; i < NEA; i++) {
         std::cout << arr[i] << " ";
@@ -151,7 +159,98 @@ void view_array(double arr[NEA], char* name){
     std::cout << std::endl;
 }
 
-Output run_model(int model, Eigen::Matrix<double, NA, NEA>  y0, StaticParameters *p, DynamicParameters *dp) {    
+double spectral_radius(Eigen::Matrix<double, 6*NEA, 6*NEA> matrix){
+    double largest = 0;
+    Eigen::EigenSolver<Eigen::Matrix<double, 6*NEA, 6*NEA>> solver(6*NEA);
+    solver.compute(matrix, false);
+
+    Eigen::VectorXcd eivals = solver.eigenvalues();
+    int r = eivals.rows();
+    for (int i=0; i<r; i++){
+        std::complex<double> z = eivals(i);
+        if (std::abs(z) > std::abs(largest))
+            largest = std::abs(z);
+    }
+    return largest;
+}
+const static Eigen::IOFormat CSVFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", "\n");
+#include <fstream>
+
+double calculateR0(StaticParameters *p, DynamicParameters *dp) {
+    // # A unica entrada de novas infecções é em E, vindo de A, I ou E
+    Eigen::Matrix<double, 6*NEA, 6*NEA>  F;
+    F.setZero(6*NEA, 6*NEA);
+
+    struct Mat {
+        enum Enum
+        {
+            E, A, I, Qi, Qa, H
+        };
+    }; 
+    for (int i=0; i < NEA; i++){
+        for (int j=0; j < NEA; j++){
+            double val = dp->vectorPhaseParameters.at(0)->beta(i, j) * p->rel_pop(i);
+            F(Mat::E*NEA + i, j) = p->ksi(j) * val;
+            F(Mat::E*NEA +i, NEA + j) = p->alpha(j) * val; // A
+            F(Mat::E*NEA +i, 2*NEA + j) = val;
+        }
+    }
+    // # Transições entre compartimentos de infectados
+    Eigen::Matrix<double, 6*NEA, 6*NEA>  V;
+    V.setZero(6*NEA, 6*NEA);
+
+    double gama_QI[NEA];
+    double gama_QA[NEA];
+
+    for (int k = 0; k < NEA; k++)
+	{
+        gama_QI[k] = dp->vectorPhaseParameters.at(0)->xI[k] * (p->gama_H[k] + p->gama_RI[k]) / (1 - dp->vectorPhaseParameters.at(0)->xI[k]);
+        gama_QA[k] = dp->vectorPhaseParameters.at(0)->xA[k] * p->gama_RA[k] / (1 - dp->vectorPhaseParameters.at(0)->xA[k]);
+	}
+
+    for (int i = 0; i < NEA; i++) {
+        int j;
+    // # Exposto -> Exposto
+        j = Mat::E + i;
+        V(j, j) =  p->mu_eq(i) +  p->a(i);
+    // # Assintomático
+        j = Mat::A*NEA + i;
+        V(j, j) = p->mu_eq(i) +  p->gama_RA(i) +  gama_QA[i];
+        V(j, Mat::E*NEA+i) = - p->a(i) * (1- p->rho(i));
+    // # Infectado sintomático
+        j = Mat::I*NEA + i;
+        V(j, j) = p->mu_eq(i) + p->theta(i)*p->mu_cov(i) + p->gama_H(i) + p->gama_RI(i) + gama_QI[i];
+        V(j, Mat::E*NEA+i) = -p->a(i)*p->rho(i);
+    // # Quarentenado sintomático
+        j = Mat::Qi*NEA + i;
+        V(j, j) = p->mu_eq(i) + p->gama_HQI(i) + p->gama_RQI(i);
+        V(j, Mat::I*NEA+i) = -gama_QI[i];
+    // # Quarentenado assintomático
+        j = Mat::Qa*NEA + i;
+        V(j, j) = p->mu_eq(i) + p->gama_RQA(i);
+        V(j, Mat::A*NEA+i) = -gama_QA[i];
+    // # Hospitalizado
+        j = Mat::H*NEA + i;
+        V(j, j) = p->mu_eq(i) + p->gama_HR(i) + p->mu_cov(i);
+        V(j, Mat::I*NEA+i) = -p->gama_H(i);
+        V(j, Mat::Qi*NEA+i) = -p->gama_HQI(i);
+    }
+
+    // std::cout << "writing to file" << std::endl;
+    // std::ofstream file1("F.c.csv");
+    // file1 << F.format(CSVFormat);
+    // file1.close();
+    // std::ofstream file2("V.c.csv");
+    // file2 << V.format(CSVFormat);
+    // file2.close();
+
+    Eigen::Matrix<double, 6*NEA, 6*NEA> next_generation_matrix = F * V.inverse();
+    double R0 = spectral_radius(next_generation_matrix);
+    
+    return R0;
+}
+
+Output run_model(int model, Eigen::Matrix<double, NA, NEA>  y0, StaticParameters *p, DynamicParameters *dp, bool verbose = false) {    
     ScenarioParameters params;
 
     read_array(params.Lambda, p->Lambda);
@@ -175,14 +274,18 @@ Output run_model(int model, Eigen::Matrix<double, NA, NEA>  y0, StaticParameters
     read_array(params.Tc, p->Tc);
     read_array(params.Tlc, p->Tlc);
 
+
     for (int i =0; i < dp->days.size(); i++){
         int day = dp->days.at(i);
+        if (verbose){
+            std::cout << "xI day " << day << "values : " << dp->vectorPhaseParameters.at(i)->xI << std::endl;
+            std::cout << "xA day " << day << "values : " << dp->vectorPhaseParameters.at(i)->xA << std::endl;
+        }
+    
         read_array_per_day(params.xI, dp->vectorPhaseParameters.at(i)->xI, day);
         read_array_per_day(params.xA, dp->vectorPhaseParameters.at(i)->xA, day);
         read_matrix_per_day(params.beta, dp->vectorPhaseParameters.at(i)->beta, day);
     }
-
-    bool verbose=false;
 
     if (verbose){
         view_array(params.Lambda, "Lambda");
@@ -217,6 +320,17 @@ Output run_model(int model, Eigen::Matrix<double, NA, NEA>  y0, StaticParameters
 			params.gama_QA[day][k] = params.xA[day][k] * params.gama_RA[k] / (1 - params.xA[day][k]);
 		}
 	}
+    for (int k = 0; k < NEA; k++)
+	{
+		for (int day = 0; day < MAX_DAYS; day++)
+		{
+            
+            // std::cout << k << " " << day << " " << params.xI[day][k] << " " << params.gama_QI[day][k] << std::endl;
+            params.gama[day][k] = p->gama(k);
+			params.gama_QI[day][k] = params.xI[day][k] * (params.gama_H[k] + params.gama_RI[k]) / (1 - params.xI[day][k]);
+			params.gama_QA[day][k] = params.xA[day][k] * params.gama_RA[k] / (1 - params.xA[day][k]);
+		}
+	}
 
     ScenarioOutput output;
 
@@ -244,7 +358,9 @@ PYBIND11_MODULE(cmodels, m) {
         .def_readwrite("xA", &PhaseParameters::xA);
     
     py::class_<DynamicParameters>(m, "DynamicParameters")
-        .def(py::init<PhaseParameters*>())
+        .def(py::init<Eigen::Matrix<double, NEA, 1> ,
+            Eigen::Matrix<double, NEA, 1> ,
+            Eigen::Matrix<double, NEA, NEA> >())
         .def("addPhase", &DynamicParameters::addPhase);
 
     py::class_<StaticParameters>(m, "StaticParameters")
@@ -269,8 +385,10 @@ PYBIND11_MODULE(cmodels, m) {
         .def_readwrite("gama_RQA", &StaticParameters::gama_RQA)
         .def_readwrite("gama_HQI", &StaticParameters::gama_HQI)
         .def_readwrite("Tc", &StaticParameters::Tc)
-        .def_readwrite("Tlc", &StaticParameters::Tlc);
+        .def_readwrite("Tlc", &StaticParameters::Tlc)
+        .def_readwrite("rel_pop", &StaticParameters::rel_pop);;
 
     m.def("model", &run_model, "A function which adds two numbers");
+    m.def("calculateR0", &calculateR0, "A function which adds two numbers");
 
 }

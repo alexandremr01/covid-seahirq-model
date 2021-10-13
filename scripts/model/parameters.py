@@ -87,10 +87,13 @@ class Parameters:
         self.gamma_HQI = np.divide(np.multiply(self.gamma_RQI, self.phi), 1 - self.phi)
         self.tlc = np.divide(self.TC, self.phi)
 
+        self.mu_cov = self.load_mu_cov()
+    
+    def load_mu_cov(self):
         if self.model == 3:
-            self.mu_cov = np.multiply(np.divide(self.fatality*self.TC, self.phi), np.multiply(1 - self.phi, self.gamma_H + self.gamma_RI))
+            return np.multiply(np.divide(self.fatality*self.TC, self.phi), np.multiply(1 - self.phi, self.gamma_H + self.gamma_RI))
         else:
-            self.mu_cov = np.divide(np.multiply(gamma, self.fatality * self.TC), 1 - self.fatality * self.TC)
+            return np.divide(np.multiply(gamma, self.fatality * self.TC), 1 - self.fatality * self.TC)
 
     def load_demographic_parameters(self):
         data_demog = pd.read_csv(self.input_folder+demographic_file).values[:, 1:]
@@ -139,7 +142,10 @@ class Parameters:
         cparameters.rel_pop = self.rel_pop
         return cparameters
 
-    def update_phases(self, phases):
+    def update_phases(self, phases, attack=1.0):
+        self.fatality = attack
+        # updates mortality
+        self.cparameters.mu_cov = self.load_mu_cov()
         self.R0, self.dynamic_parameters = self.load_dynamic_parameters(phases, self.rel_pop, self.fatality, self.age_strata)
         self.get_initial_matrix(self.R0, self.I0)
         return self.R0

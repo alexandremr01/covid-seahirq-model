@@ -35,8 +35,7 @@ def death_day_relation():
                                  xI=xI_array, xA=xA_array)
                 p.update_phases(phases)
                 print(p.initial)
-                out = cmodels.model(
-                    3, p.initial, p.cparameters, p.dynamic_parameters, False)
+                out = cmodels.model(3, p.initial, p.cparameters, p.dynamic_parameters, False)
                 # print(out.Y_sum[-1])
                 # print(out.YOUT)
                 deaths = out.Y_sum[-1][10]

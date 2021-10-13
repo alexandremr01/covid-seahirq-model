@@ -8,7 +8,7 @@ import os
 I0 = 1
 scenarios = ['BR', 'NG', 'US', 'GR']
 age_strata = 16
-interventions = [8, 9]
+interventions = [0, 6, 8, 9]
 xi_values = np.linspace(0, 0.98, 100)
 xa_values = np.linspace(0, 0.98, 100)
 xI_array = np.full(age_strata, 0, dtype=np.float64)

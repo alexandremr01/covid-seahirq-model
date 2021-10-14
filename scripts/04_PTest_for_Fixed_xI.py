@@ -14,7 +14,7 @@ interventions = [0, 6, 8, 9]
 default_figsize = [6.4, 4.8]
 
 P_I_Test = 0.5
-Pinfec = 0.8
+Pinfec = 0.5
 
 xI = 0.3
 xA = 0.3

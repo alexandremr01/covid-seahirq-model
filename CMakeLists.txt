@@ -25,5 +25,6 @@ target_link_libraries (spatial_covid0d_estrat modellib)
 
 # python implementation
 find_package(pybind11 CONFIG REQUIRED)
-pybind11_add_module(cmodels MODULE src/python_interface/python_interface.cpp)
+pybind11_add_module(cmodels MODULE src/python_interface/bind.cpp src/python_interface/calculate_r0.cpp
+        src/python_interface/matrix.cpp src/python_interface/run_model.cpp)
 target_link_libraries(cmodels PRIVATE modellib)

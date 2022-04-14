@@ -35,6 +35,10 @@ This is the core domain:
 
 Files that will generate the python interface for the model.
 
+- `/src/seahirq_lib/bind.cpp` - Declares the interface between Python and C code
+
+The remaining functions are in majority handlers.
+
 ## Commands
 
 Files that will generate the executable interface for the model.

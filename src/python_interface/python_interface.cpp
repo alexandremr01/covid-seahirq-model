@@ -1,8 +1,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
-#include "scenario.h"
-#include "models.h"
-#include "solvers.h"
+#include "../seahirq_lib/scenario.h"
+#include "../seahirq_lib/models.h"
+#include "../seahirq_lib/solvers.h"
 #include <iostream>
 #include <string>
 #include <pybind11/eigen.h>

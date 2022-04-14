@@ -1,6 +1,6 @@
 #pragma once
 #include <stdio.h>
-#include "macros.h"
+#include "../seahirq_lib/macros.h"
 
 struct DataReal
 {

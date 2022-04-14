@@ -4,4 +4,4 @@ bin
 
 scripts/.idea
 scripts/__pycache__
-bin
+build

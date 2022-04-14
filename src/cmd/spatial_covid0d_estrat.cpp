@@ -5,11 +5,11 @@
 #include <pthread.h>
 #include <math.h>
 
-#include "scenario.h"
-#include "models.h"
+#include "../seahirq_lib/scenario.h"
+#include "../seahirq_lib/models.h"
 
-#include "macros.h"
-#include "solvers.h"
+#include "../seahirq_lib/macros.h"
+#include "../seahirq_lib/solvers.h"
 #include "real_data_reader.h"
 
 // Variaveis da EDO, valores ja divididos pro Ai

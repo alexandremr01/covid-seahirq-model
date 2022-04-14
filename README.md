@@ -7,7 +7,7 @@ Install the code with
 ```bash
 mkdir build
 cd build
-EIGEN3_INCLUDE_DIR=/app/3rdparty/eigen cmake .. -Dpybind11_DIR=/usr/local/lib/python3.7/site-packages/pybind11/share/cmake/pybind11
+cmake ..
 make
 ```
 
